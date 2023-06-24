@@ -1,9 +1,9 @@
 import express from 'express';
 import mysql from 'mysql';
-import { dbConfig } from './models/db';
-import dailyRouter from './routes/njBol.route';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import { dbConfig } from './models/db';
+import dailyRouter from './routes/daily.route';
 const app = express();
 export const connection = mysql.createConnection(dbConfig);
 app.use(cors());
