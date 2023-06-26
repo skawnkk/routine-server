@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
   res.json({ message: 'Hello World2!' });
 });
 
-app.use('/daily', dailyRouter);
+app.use('/schedule', dailyRouter);
 
 const port = 8080;
 app.listen(port, () => {
