@@ -23,6 +23,6 @@ export const updateTodo = async (req, res, next) => {
     if (err) {
       res.status(500).send({ message: err.message || 'no data' });
     }
-    return res.status(200);
+    return res.status(200).send(data);
   });
 };

@@ -38,7 +38,7 @@ export const updateTodo = (dailyId: string, todoId: string, value: string, cb: a
     (error, rows, fields) => {
       if (error) cb(createError(500, error));
       else {
-        cb(null);
+        cb(null, { id: todoId, done: value });
       }
     }
   );
