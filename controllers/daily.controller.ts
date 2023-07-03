@@ -36,3 +36,12 @@ export const updateTodo = async (req, res, next) => {
     return res.status(200).send(data);
   });
 };
+
+export const deleteTodo = async (req, res, next) => {
+  dailyService.deleteTodo(req.params.id, (err, data) => {
+    if (err) {
+      res.status(500).send({ message: err.message || 'no data' });
+    }
+    return res.status(200).send(data);
+  });
+};

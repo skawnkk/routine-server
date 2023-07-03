@@ -62,3 +62,16 @@ export const updateTodo = (dailyId: string, todoId: string, value: string, cb: a
     }
   );
 };
+
+export const deleteTodo = (todoId: string, cb: any) => {
+  connection.query(
+    `DELETE FROM todo
+    WHERE todo.todoId=${todoId}`,
+    (error, rows, fields) => {
+      if (error) cb(createError(500, error));
+      else {
+        cb(null, { message: 'SUCCESS' });
+      }
+    }
+  );
+};

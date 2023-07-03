@@ -6,5 +6,5 @@ dailyRouter.get('/monthly', dailyController.getMonthly);
 dailyRouter.get('/daily/:id', dailyController.getDaily);
 dailyRouter.post('/daily/:id/todo', dailyController.updateTodo);
 dailyRouter.post('/daily/:id/todo/add', dailyController.createTodo);
-
+dailyRouter.delete('/daily/:id/todo/delete', dailyController.deleteTodo);
 export default dailyRouter;
