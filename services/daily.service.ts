@@ -1,5 +1,19 @@
+import { MysqlError } from 'mysql';
 import { connection } from '../index';
 import createError from 'http-errors';
+
+type YN = 'Y' | 'N';
+type Daily = {
+  dailyId: number;
+  memberId: number;
+  date: Date;
+  keep: string | null;
+  problem: string | null;
+  try: string | null;
+  todoId: number;
+  done: YN;
+  todo: string | null;
+};
 
 export const getMonthly = (cb: any) => {
   connection.query('SELECT * from daily', (error, rows, fields) => {
@@ -9,32 +23,37 @@ export const getMonthly = (cb: any) => {
 };
 
 export const findDaily = (dailyId: string, cb: any) => {
-  const memberId = '1';
   connection.query(
-    `select *
-    from daily
-    inner join todo
-      on todo.daily_id = ${dailyId}
-      where daily.daily_id = ${dailyId} && daily.member_id = ${memberId}`,
-    (error, rows, fields) => {
+    `SELECT *
+    FROM daily
+    JOIN todo ON daily.dailyId = todo.dailyId
+    WHERE daily.dailyId = ${dailyId};`,
+    (error: MysqlError | null, rows: Daily[], fields) => {
       if (error) cb(createError(500, error));
       else {
-        console.log(rows);
-
-        const dailyTodo = rows.map((row) => ({ todo_id: row.todo_id, todo: row.todo, done: row.done }));
-        const daily = { ...rows[0], todos: dailyTodo };
-        cb(null, daily);
+        if (!rows.length) cb(null, null);
+        const { date, keep, problem, try: tryData } = rows[0];
+        const todos = rows.map((row) => ({ todoId: row.todoId, todo: row.todo, done: row.done }));
+        cb(null, { date, keep, problem, try: tryData, todos });
       }
     }
   );
 };
 
+export const createTodo = (dailyId: string, todo: string, cb: any) => {
+  connection.query(`INSERT INTO todo(dailyId, todo, done) VALUES('${dailyId}', '${todo}', 'N')`, (error, rows, fields) => {
+    if (error) cb(createError(500, error));
+    else {
+      cb(null, { message: 'success' });
+    }
+  });
+};
+
 export const updateTodo = (dailyId: string, todoId: string, value: string, cb: any) => {
-  console.log(todoId, value);
   connection.query(
     `UPDATE todo
     SET done = '${value}'
-    where todo_id = ${todoId}`,
+    WHERE todo.dailyId=${dailyId} and todo.todoId=${todoId}`,
     (error, rows, fields) => {
       if (error) cb(createError(500, error));
       else {
