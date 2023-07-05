@@ -13,6 +13,7 @@ type Daily = {
   todoId: number;
   done: YN;
   todo: string | null;
+  [key: string]: Date | number | string | null;
 };
 
 export const getMonthly = (cb: any) => {
@@ -24,17 +25,23 @@ export const getMonthly = (cb: any) => {
 
 export const findDaily = (dailyId: string, cb: any) => {
   connection.query(
-    `SELECT *
+    `SELECT daily.dailyId, keep, problem, try, todo.*, timeTable.*
     FROM daily
     JOIN todo ON daily.dailyId = todo.dailyId
+    JOIN timeTable ON timeTable.dailyId = todo.dailyId
     WHERE daily.dailyId = ${dailyId};`,
     (error: MysqlError | null, rows: Daily[], fields) => {
       if (error) cb(createError(500, error));
       else {
-        if (!rows.length) cb(null, null);
-        const { date, keep, problem, try: tryData } = rows[0];
+        if (!rows.length) {
+          cb(null, null);
+          return;
+        }
+
+        const { date = new Date(), keep = '', problem = '', try: tryData = [], ...restData } = rows[0];
+        const { dailyId, todoId, done, memberId, todo, ...timeTable } = restData;
         const todos = rows.map((row) => ({ todoId: row.todoId, todo: row.todo, done: row.done }));
-        cb(null, { date, keep, problem, try: tryData, todos });
+        cb(null, { date, keep, problem, try: tryData, todos, schedule: timeTable });
       }
     }
   );
