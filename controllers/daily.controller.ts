@@ -45,3 +45,13 @@ export const deleteTodo = async (req, res, next) => {
     return res.status(200).send(data);
   });
 };
+
+export const updateSchedule = async (req, res, next) => {
+  const { time, schedule } = req.body;
+  dailyService.updateSchedule(req.params.id, time, schedule, (err, data) => {
+    if (err) {
+      res.status(500).send({ message: err.message || 'no data' });
+    }
+    return res.status(200).send(data);
+  });
+};
