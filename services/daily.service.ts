@@ -2,19 +2,14 @@ import { MysqlError } from 'mysql';
 import { connection } from '../index';
 import createError from 'http-errors';
 
-type YN = 'Y' | 'N';
-type Daily = {
-  dailyId: number;
-  memberId: number;
+interface DailyWithTodosAndSchedule {
   date: Date;
-  keep: string | null;
-  problem: string | null;
-  try: string | null;
-  todoId: number;
-  done: YN;
-  todo: string | null;
-  [key: string]: Date | number | string | null;
-};
+  keep: string;
+  problem: string;
+  try: string[];
+  todos: { todoId: number; todo: string; done: boolean }[];
+  schedule: { timeId: number; time: string; task: string }[];
+}
 
 export const getMonthly = (cb: any) => {
   connection.query('SELECT * from daily', (error, rows, fields) => {
@@ -23,28 +18,40 @@ export const getMonthly = (cb: any) => {
   });
 };
 
-export const findDaily = (dailyId: string, cb: any) => {
-  connection.query(
-    `SELECT daily.dailyId, keep, problem, try, todo.*, timeTable.*
+export const findDaily = (dailyId: string, cb: (error: MysqlError | null, data: DailyWithTodosAndSchedule | null) => void) => {
+  const query = `
+    SELECT daily.date, daily.keep, daily.problem, daily.try,
+           todo.todoId, todo.todo, todo.done,
+           _timeTable.time, _timeTable.task
     FROM daily
-    JOIN todo ON daily.dailyId = todo.dailyId
-    JOIN timeTable ON timeTable.dailyId = todo.dailyId
-    WHERE daily.dailyId = ${dailyId};`,
-    (error: MysqlError | null, rows: Daily[], fields) => {
-      if (error) cb(createError(500, error));
-      else {
-        if (!rows.length) {
-          cb(null, null);
-          return;
-        }
+    LEFT JOIN todo ON daily.dailyId = todo.dailyId
+    LEFT JOIN _timeTable ON daily.dailyId = _timeTable.dailyId
+    WHERE daily.dailyId = ${dailyId};
+  `;
 
-        const { date = new Date(), keep = '', problem = '', try: tryData = [], ...restData } = rows[0];
-        const { dailyId, todoId, done, memberId, todo, ...timeTable } = restData;
-        const todos = rows.map((row) => ({ todoId: row.todoId, todo: row.todo, done: row.done }));
-        cb(null, { date, keep, problem, try: tryData, todos, schedule: timeTable });
+  connection.query(query, (error: MysqlError | null, rows: any[], fields) => {
+    if (error) {
+      console.log(error);
+      cb(createError(500), null);
+      return;
+    } else {
+      if (!rows.length) {
+        cb(null, null);
+        return;
       }
+
+      const data: DailyWithTodosAndSchedule = {
+        date: rows[0].date || new Date(),
+        keep: rows[0].keep || '',
+        problem: rows[0].problem || '',
+        try: rows[0].try ? rows[0].try.split(',') : [],
+        todos: rows.map((row) => ({ todoId: row.todoId, todo: row.todo, done: row.done })),
+        schedule: rows.map((row) => ({ timeId: row.timeId, time: row.time, task: row.task })).filter((e) => e),
+      };
+
+      cb(null, data);
     }
-  );
+  });
 };
 
 export const createTodo = (dailyId: string, todo: string, cb: any) => {
