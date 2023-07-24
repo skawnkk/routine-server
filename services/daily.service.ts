@@ -82,3 +82,18 @@ export const deleteTodo = (todoId: string, cb: any) => {
     }
   );
 };
+
+export const updateSchedule = (dailyId: string, time: string, schedule: string, cb: any) => {
+  connection.query(
+    `INSERT INTO _timeTable (dailyId, time, task)
+    VALUES ('${dailyId}', '${time}', '${schedule}')
+    ON DUPLICATE KEY UPDATE task='${schedule}'`,
+    (error, rows, fields) => {
+      console.log(error);
+      if (error) cb(createError(500, error));
+      else {
+        cb(null, { time, schedule });
+      }
+    }
+  );
+};
