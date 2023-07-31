@@ -3,9 +3,13 @@ import createError from 'http-errors';
 
 export const getTodo = (dailyId: string, cb: any) => {
   connection.query(`SELECT * FROM todo where todo.dailyId=${dailyId}`, (error, rows, fields) => {
+    console.log('query', error, rows);
     if (error) cb(createError(500, error));
     else {
-      cb(null, { data: rows });
+      const data = rows.map((row) => {
+        return { todoId: row.todoId, done: row.done, todo: row.todo };
+      });
+      cb(null, data);
     }
   });
 };
