@@ -17,35 +17,6 @@ export const getDaily = async (req, res, next) => {
   });
 };
 
-export const createTodo = async (req, res, next) => {
-  const { todo } = req.body;
-  dailyService.createTodo(req.params.id, todo, (err, data) => {
-    if (err) {
-      res.status(500).send({ message: err.message || 'no data' });
-    }
-    return res.status(200).send(data);
-  });
-};
-
-export const updateTodo = async (req, res, next) => {
-  const { todoId, value } = req.body;
-  dailyService.updateTodo(req.params.id, todoId, value, (err, data) => {
-    if (err) {
-      res.status(500).send({ message: err.message || 'no data' });
-    }
-    return res.status(200).send(data);
-  });
-};
-
-export const deleteTodo = async (req, res, next) => {
-  dailyService.deleteTodo(req.params.id, (err, data) => {
-    if (err) {
-      res.status(500).send({ message: err.message || 'no data' });
-    }
-    return res.status(200).send(data);
-  });
-};
-
 export const updateSchedule = async (req, res, next) => {
   const { time, schedule } = req.body;
   dailyService.updateSchedule(req.params.id, time, schedule, (err, data) => {

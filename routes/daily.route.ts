@@ -6,10 +6,6 @@ const dailyRouter = express.Router();
 dailyRouter.get('/monthly', dailyController.getMonthly);
 //daily
 dailyRouter.get('/daily/:id', dailyController.getDaily);
-//daily_todo
-dailyRouter.post('/daily/:id/todo', dailyController.updateTodo);
-dailyRouter.post('/daily/:id/todo/add', dailyController.createTodo);
-dailyRouter.delete('/daily/:id/todo/delete', dailyController.deleteTodo);
 //daily_timetable
 dailyRouter.post('/daily/:id/schedule', dailyController.updateSchedule);
 

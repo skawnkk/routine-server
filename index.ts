@@ -4,6 +4,8 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { dbConfig } from './models/db';
 import dailyRouter from './routes/daily.route';
+import todoRouter from './routes/todo.route';
+
 const app = express();
 export const connection = mysql.createConnection(dbConfig);
 app.use(cors());
@@ -14,6 +16,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/schedule', dailyRouter);
+app.use('/todo', todoRouter);
 
 const port = 8080;
 app.listen(port, () => {

@@ -18,42 +18,6 @@ export const getMonthly = (cb: any) => {
   });
 };
 
-export const findDaily = (dailyId: string, cb: (error: MysqlError | null, data: DailyWithTodosAndSchedule | null) => void) => {
-  const query = `
-    SELECT daily.date, daily.keep, daily.problem, daily.try,
-           todo.todoId, todo.todo, todo.done,
-           _timeTable.time, _timeTable.task
-    FROM daily
-    LEFT JOIN todo ON daily.dailyId = todo.dailyId
-    LEFT JOIN _timeTable ON daily.dailyId = _timeTable.dailyId
-    WHERE daily.dailyId = ${dailyId};
-  `;
-
-  connection.query(query, (error: MysqlError | null, rows: any[], fields) => {
-    if (error) {
-      console.log(error);
-      cb(createError(500), null);
-      return;
-    } else {
-      if (!rows.length) {
-        cb(null, null);
-        return;
-      }
-
-      const data: DailyWithTodosAndSchedule = {
-        date: rows[0].date || new Date(),
-        keep: rows[0].keep || '',
-        problem: rows[0].problem || '',
-        try: rows[0].try ? rows[0].try.split(',') : [],
-        todos: rows.map((row) => ({ todoId: row.todoId, todo: row.todo, done: row.done })),
-        schedule: rows.map((row) => ({ timeId: row.timeId, time: row.time, task: row.task })).filter((e) => e),
-      };
-
-      cb(null, data);
-    }
-  });
-};
-
 export const createTodo = (dailyId: string, todo: string, cb: any) => {
   connection.query(`INSERT INTO todo(dailyId, todo, done) VALUES('${dailyId}', '${todo}', 'N')`, (error, rows, fields) => {
     if (error) cb(createError(500, error));
@@ -90,6 +54,41 @@ export const deleteTodo = (todoId: string, cb: any) => {
   );
 };
 
+// API분리하기
+export const findDaily = (dailyId: string, cb: any) => {
+  connection.query(
+    `SELECT *
+    FROM daily
+    LEFT JOIN todo ON daily.dailyId = todo.dailyId
+    LEFT JOIN _timeTable ON daily.dailyId = _timeTable.dailyId
+    WHERE daily.dailyId = ${dailyId};`,
+    (error: MysqlError | null, rows: any[], fields) => {
+      if (error) cb(createError(500, error));
+      else {
+        try {
+          if (!rows.length) cb(null, null);
+          const { date, keep, problem, try: tryData } = rows[0];
+          const todoIds = new Set();
+          const todos = rows
+            .filter((row) => row.todoId !== null)
+            .map((row) => {
+              if (todoIds.has(row.todoId)) {
+                return null;
+              }
+              todoIds.add(row.todoId);
+              return { todoId: row.todoId, todo: row.todo, done: row.done };
+            })
+            .filter((row) => row !== null);
+          const schedule = rows.filter((row) => row.time !== null).map((row) => ({ time: row.time, task: row.task }));
+          cb(null, { date, keep, problem, try: tryData, todos, schedule });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  );
+};
+
 export const updateSchedule = (dailyId: string, time: string, schedule: string, cb: any) => {
   connection.query(
     `INSERT INTO _timeTable (dailyId, time, task)
@@ -104,3 +103,9 @@ export const updateSchedule = (dailyId: string, time: string, schedule: string, 
     }
   );
 };
+
+// `SELECT *
+// FROM daily
+// LEFT JOIN todo ON daily.dailyId = todo.dailyId
+// LEFT JOIN _timeTable ON daily.dailyId = _timeTable.dailyId
+// WHERE daily.dailyId = ${dailyId};`,
