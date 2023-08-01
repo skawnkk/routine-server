@@ -11,7 +11,7 @@ interface DailyWithTodosAndSchedule {
   schedule: { timeId: number; time: string; task: string }[];
 }
 
-export const getMonthly = (cb: any) => {
+export const getDailyList = (cb: any) => {
   connection.query('SELECT * from daily', (error, rows, fields) => {
     if (error) cb(createError(500, error));
     else cb(null, rows);
