@@ -2,14 +2,10 @@ import { connection } from '../index';
 import createError from 'http-errors';
 
 export const getTodo = (dailyId: string, cb: any) => {
-  connection.query(`SELECT * FROM todo where todo.dailyId=${dailyId}`, (error, rows, fields) => {
-    console.log('query', error, rows);
+  connection.query(`SELECT todoId, done, todo FROM todo where todo.dailyId=${dailyId}`, (error, rows, fields) => {
     if (error) cb(createError(500, error));
     else {
-      const data = rows.map((row) => {
-        return { todoId: row.todoId, done: row.done, todo: row.todo };
-      });
-      cb(null, data);
+      cb(null, rows);
     }
   });
 };
