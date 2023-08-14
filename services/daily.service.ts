@@ -11,50 +11,68 @@ interface DailyWithTodosAndSchedule {
   schedule: { timeId: number; time: string; task: string }[];
 }
 
-export const getDailyList = (cb: any) => {
-  connection.query('SELECT * from daily', (error, rows, fields) => {
-    if (error) cb(createError(500, error));
-    else cb(null, rows);
-  });
-};
-
-export const createTodo = (dailyId: string, todo: string, cb: any) => {
-  connection.query(`INSERT INTO todo(dailyId, todo, done) VALUES('${dailyId}', '${todo}', 'N')`, (error, rows, fields) => {
-    if (error) cb(createError(500, error));
-    else {
-      cb(null, { message: 'success' });
-    }
-  });
-};
-
-export const updateTodo = (dailyId: string, todoId: string, value: string, cb: any) => {
+export const getDailyList = ({ year, month }, cb: any) => {
   connection.query(
-    `UPDATE todo
-    SET done = '${value}'
-    WHERE todo.dailyId=${dailyId} and todo.todoId=${todoId}`,
+    `SELECT *
+  FROM daily
+  WHERE date LIKE '${year}-${month >= 10 ? month : `0${month}`}%';
+  `,
     (error, rows, fields) => {
       if (error) cb(createError(500, error));
       else {
-        cb(null, { id: todoId, done: value });
-      }
-    }
-  );
-};
+        // const { dailyId, date, keep, problem, try: tryData } = rows[0];
+        // const todoIds = new Set();
+        // const todos = rows
+        //   .filter((row) => row.todoId !== null)
+        //   .map((row) => {
+        //     if (todoIds.has(row.todoId)) {
+        //       return null;
+        //     }
+        //     todoIds.add(row.todoId);
+        //     return { todoId: row.todoId, todo: row.todo, done: row.done };
+        //   })
+        //   .filter((row) => row !== null);
 
-export const deleteTodo = (todoId: string, cb: any) => {
-  connection.query(
-    `DELETE FROM todo
-    WHERE todo.todoId=${todoId}`,
-    (error, rows, fields) => {
-      if (error) cb(createError(500, error));
-      else {
-        cb(null, { message: 'SUCCESS' });
+        cb(null, rows);
       }
     }
   );
 };
 
 // API분리하기
+export const createDaily = (date: string, cb: any) => {
+  connection.query(`SELECT dailyId FROM daily WHERE date = '${date}' and memberId = '1'`, (error, rows, fields) => {
+    if (error) {
+      console.error('Error fetching createDaily:', error);
+      cb(createError(500, error));
+    } else {
+      if (rows.length > 0) {
+        cb(null, { id: rows[0]?.dailyId });
+      } else {
+        connection.query(`INSERT INTO daily (date, memberId) VALUES ('${date}', '1')`, (err, rows) => {
+          if (err) {
+            cb(createError(500, err));
+            console.error('Error createDaily:', err);
+          } else {
+            cb(null, { id: rows.insertId });
+          }
+        });
+      }
+    }
+  });
+};
+
+export const updateDaily = (data: { dailyId: string; id: string; value: string }, cb: any) => {
+  connection.query(`UPDATE daily SET ${data.id} = '${data.value}' WHERE daily.dailyId = ${data.dailyId}`, (error, rows, fields) => {
+    if (error) {
+      console.error('Error fetching createDaily:', error);
+      cb(createError(500, error));
+    } else {
+      cb(null, { message: 'success' });
+    }
+  });
+};
+
 export const findDaily = (dailyId: string, cb: any) => {
   connection.query(
     `SELECT *
@@ -104,8 +122,17 @@ export const updateSchedule = (dailyId: string, time: string, schedule: string, 
   );
 };
 
-// `SELECT *
-// FROM daily
-// LEFT JOIN todo ON daily.dailyId = todo.dailyId
-// LEFT JOIN _timeTable ON daily.dailyId = _timeTable.dailyId
-// WHERE daily.dailyId = ${dailyId};`,
+//working
+export const createSchedule = (date: string, time: string, schedule: string, cb: any) => {
+  console.log(date, time, schedule);
+  connection.query(`INSERT INTO _timeTable (time, task) VALUES ('${time}', '${schedule}')`, (err, rows) => {
+    if (err) {
+      console.error('Error adding data to _timeTable:', err);
+      rows.status(500).json({ error: 'Error adding data to _timeTable' });
+    } else {
+      console.log(rows);
+
+      rows.status(200).json({ message: 'Data added successfully', id: rows[0].id });
+    }
+  });
+};
